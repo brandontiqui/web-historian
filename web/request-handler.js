@@ -11,8 +11,8 @@ exports.handleGet = function (req, res) {
   var sites = archive.paths.archivedSites;
   var webPublic = archive.paths.siteAssets;
   var list = archive.paths.list;
-
   var pathName = URL.parse(req.url).pathname;
+
   if (pathName === '/') {
     httpHelpers.serveAssets(res, webPublic + '/index.html', function(error, contents) {
       res.writeHead(200, httpHelpers.headers);
@@ -45,13 +45,23 @@ exports.handlePost = function (req, res) {
     body += chunk;
   });
   req.on('end', function() {
-    fs.appendFile(list, body.slice(4) + '\n', 'utf8', function (err) {
-      console.log ('Added ' + body.slice(4) + ' to ' + list);
-    });
+    var pathName = '/' + body.slice(4);
+    fs.access(sites + pathName, function (error) {
+      if (!error) {
+        httpHelpers.serveAssets(res, sites + pathName, function(error, contents) {
+          res.writeHead(200, httpHelpers.headers);
+          res.end(contents);
+        });
+      } else {
+        fs.appendFile(list, body.slice(4) + '\n', 'utf8', function (err) {
+          console.log ('Added ' + body.slice(4) + ' to ' + list);
+        });
 
-    httpHelpers.serveAssets(res, webPublic + '/loading.html', function(error, contents) {
-      res.writeHead(302, httpHelpers.headers);
-      res.end(contents);
+        httpHelpers.serveAssets(res, webPublic + '/loading.html', function(error, contents) {
+          res.writeHead(302, httpHelpers.headers);
+          res.end(contents);
+        });
+      }
     });
   });
 };
