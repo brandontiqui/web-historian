@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var request = require('request');
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -25,17 +26,57 @@ exports.initialize = function(pathsObj) {
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-exports.readListOfUrls = function() {
+var siteAssets = path.join(__dirname, '../web/public');
+var archivedSites = path.join(__dirname, '../archives/sites');
+var list = path.join(__dirname, '../archives/sites.txt');
+
+exports.readListOfUrls = function(callback) {
+  fs.readFile(exports.paths.list, 'utf8', function (err, data) {
+    if (err) {
+      throw err;
+    } else {
+      data = data.split('\n');
+      if (data.slice(-1)[0] === '') { data = data.slice(0, -1); }
+      callback(data);
+    }
+  });
 };
 
-exports.isUrlInList = function() {
+exports.isUrlInList = function(target, callback) {
+  exports.readListOfUrls(function (array) {
+    if (array.indexOf(target) !== -1) {
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
 };
 
-exports.addUrlToList = function() {
+exports.addUrlToList = function(string, callback) {
+  exports.isUrlInList(string, function (listed) {
+    if (!listed) {
+      fs.appendFile(exports.paths.list, string + '\n', 'utf8', callback);
+    }
+  });    
 };
 
-exports.isUrlArchived = function() {
+exports.isUrlArchived = function(string, callback) {
+  fs.access(exports.paths.archivedSites + '/' + string, function (err) {
+    callback(!err);
+  });
 };
 
-exports.downloadUrls = function() {
+exports.downloadUrls = function(array) {
+  array.forEach(function (url) {
+    exports.isUrlArchived(url, function (archived) {
+      // if (!archived) {
+      request('http://' + url, function (error, response, body) {
+        fs.writeFile(exports.paths.archivedSites + '/' + url, body, 'utf8', function () {
+          console.log('Downloaded ' + url + ' html to ' + list);
+        });
+      });  
+      // } 
+    });
+  });
+
 };

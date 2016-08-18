@@ -10,11 +10,11 @@
   },
   "scripts": {
     "postinstall": "curl -s https://raw.githubusercontent.com/hackreactor-labs/pomander/master/bin/install | bash",
-    "start": "node ./web/basic-server.js",
+    "start": "nodemon ./web/basic-server.js",
     "start:es6": "babel-node ./web/basic-server.js",
     "test": "mocha test",
     "test:es6": "mocha --compilers js:babel-register test",
-    "lint": "eslint ./"
+    "lint": "eslint --fix ./"
   },
   "dependencies": {
     "bluebird": "^3.3.4",
